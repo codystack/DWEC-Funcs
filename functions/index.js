@@ -74,34 +74,42 @@ exports.verifyPayment = functions.https.onCall((reference) => {
   return paystack.transaction.verify(reference);
 });
 
-exports.sendOrderEmail = functions.https.onCall((data) => {
-  console.log("Sending order summary email...", data);
-  const mailOptions = {
-    from: `stanleynyekpeye@gmail.com`,
-    to: data.email,
-    subject: "New Order Confirmation",
-    html: `<h3>Hello ${data.userName},</h3>
+// exports.sendOrderEmail = functions.https.onCall((data) => {
+//   console.log("Sending order summary email...", data);
+
+// });
+
+exports.sendEmail = functions.firestore
+  .document("orders/{orderId}")
+  .onCreate((snap, context) => {
+    const mailOptions = {
+      from: `stanleynyekpeye@gmail.com`,
+      to: snap.data().email,
+      subject: "New Order Confirmation",
+      html: `<h3>Hello ${snap.data().customerName},</h3>
      <p>Thank you for choosing our platform.</p>
-     <p>We are glad to inform you that your order with Order No: (${data.orderNo}) has been confirmed successfully. Once approved, we'll let you know.</p>
+     <p>We are glad to inform you that your order with Order No: (${
+       snap.data().orderNo
+     }) has been confirmed successfully. Once approved, we'll let you know.</p>
      <p>Click <a href="https://www.dwecwinery.com/help">here</a> to learn more.</p>
      <br/>
      <p>You ordered for</p>
      <br />
      <br />
      <p>Regards From DWEC Winery</p>`,
-  };
+    };
 
-  return transporter.sendMail(mailOptions, (error, data) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-    console.log("Sent!");
+    transporter.sendMail(mailOptions, (error, data) => {
+      if (error) {
+        console.log(error);
+        return;
+      }
+      console.log("Sent!");
+    });
   });
-});
 
 exports.sendProductFCM = functions.firestore
-  .document("products}")
+  .document("products/{productId}")
   .onCreate((snap, context) => {
     const payload = {
       notification: {
